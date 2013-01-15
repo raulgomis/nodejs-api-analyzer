@@ -1,9 +1,20 @@
-    var sys = require("sys"),  
-    my_http = require("http");  
-    my_http.createServer(function(request,response){  
-        sys.puts("I got kicked");  
-        response.writeHeader(200, {"Content-Type": "text/plain"});  
-        response.write("Hello World");  
-        response.end();  
-    }).listen(8090);  
-    sys.puts("Server Running on 8080");   
+    var express = require('express');
+	var app = express();	
+	var sys = require("sys");
+    
+	
+	app.get('/', function(req, res){
+		res.send('Testing Express & Node js');
+	});
+	
+	app.get('/sayHello/:name', function(req, res){
+		res.send('Hello '+ req.params.name);
+	});
+	
+	
+	app.listen(8090);
+
+    sys.puts("Server Running on 8090");   
+	
+	
+	
