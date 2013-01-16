@@ -76,7 +76,7 @@ app.get('/listCrashLog', function(req, res){
 	//res.send("[{'username':'pepe'}]");
 	
 	res.send(
-		"['listado':[{'date':'dsadasdas', 'username':'asdasda','stacktrace':'asdasda','exception':'dasdasdas'},{'date':'dsadasdas', 'username':'asdasda', 'stacktrace':'asdasda', 'exception':'dasdasdas'}]]"
+		'[{"date":"dsadasdas", "username":"asdasda","stacktrace":"asdasda","exception":"dasdasdas"},{"date":"dsadasdas", "username":"asdasda", "stacktrace":"asdasda", "exception":"dasdasdas"}]'
 	);
 });
 
