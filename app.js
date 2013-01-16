@@ -9,9 +9,16 @@ var express = require('express')
   , http = require('http')
   , path = require('path');
 
+
+//PARSE.COM  
+var Parse = require('node-parse-api').Parse;
+var APP_ID = "pmXQaDdUzrR9TU3q8apjnb2dJ85oWuIPFZ85bOe3";
+var MASTER_KEY = "coac3nOJxB9I4DnXQn0CtmBP9ciNgcKXiNSI0aDc";
+var parse = new Parse(APP_ID, MASTER_KEY);
+  
 var app = express();
 var mongoose = require("mongoose");
-//mongoose.connect("mongodb://analyzer:analyzer@ds047447.mongolab.com:47447/analyzer");
+mongoose.connect("mongodb://analyzer:analyzer@ds047447.mongolab.com:47447/analyzer");
 var db = mongoose.connection;
 
 // Config
@@ -49,35 +56,38 @@ app.get('/saveCrashLog', function(req, res){
 	var stacktrace = req.param('stacktrace', null);
 	
 	res.send('Crash detected! '+ username);
-	
-	
+
 	var crashLog = new CrashData({ 
 		username: username, 
 		exception: exception,
 		stacktrace: stacktrace
 		});
-		
 	crashLog.save(function (err) {
 	  	if (err) {
 			console.log('Error...');
 		}
 		else {
 	  		console.log('Crash saved for user: '+username);
+			//mensaje push
 		}
 	});
+});
+
+app.get('/parse', function(req, res){
 	
+	parse.findMany('Todo', {order:5}, function (err, response) {
+	  res.send(response);
+	});
+
 });
 
 // List all crashes
 app.get('/listCrashLog', function(req, res){
 	var username = req.param('username', null);
-	
-	//TODO
-	//res.send("[{'username':'pepe'}]");
-	
-	res.send(
-		'[{"date":"dsadasdas", "username":"asdasda","stacktrace":"asdasda","exception":"dasdasdas"},{"date":"dsadasdas", "username":"asdasda", "stacktrace":"asdasda", "exception":"dasdasdas"}]'
-	);
+	var datenow = new Date();
+	CrashData.find().limit(100).execFind(function (arr,data) {
+		res.send(data);
+	});
 });
 
 app.get('/', routes.index);
