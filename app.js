@@ -9,6 +9,7 @@ var express = require('express')
   , http = require('http')
   , path = require('path');
 
+var uuid = require('node-uuid');
 
 //PARSE.COM  
 var Parse = require('node-parse-api').Parse;
@@ -37,12 +38,20 @@ app.configure(function(){
 // Esquema
 var schema = mongoose.Schema({ 
 	date: { type: Date, default: Date.now },
-	username: String, 
+	applicationId: String, 
 	exception: String,
 	stacktrace: String 
 });
 
 var CrashData = mongoose.model('CrashData', schema);
+
+var schemaApp = mongoose.Schema({ 
+	applicationId: String,
+	name: String,
+	date: { type: Date, default: Date.now }
+});
+var Application = mongoose.model('Application', schemaApp);
+
 
 // WS
 app.configure('development', function(){
@@ -51,30 +60,43 @@ app.configure('development', function(){
 
 // Save crash
 app.get('/saveCrashLog', function(req, res){
-	var username = req.param('username', null);
+	var applicationId = req.param('applicationId', null);
 	var exception = req.param('exception', null);
 	var stacktrace = req.param('stacktrace', null);
 	
-	res.send('Crash detected! '+ username);
+	
 
 	var crashLog = new CrashData({ 
-		username: username, 
+		applicationId: applicationId, 
 		exception: exception,
 		stacktrace: stacktrace
 		});
+		
 	crashLog.save(function (err) {
-	  	if (err) {
+		if (err) {
 			console.log('Error...');
 		}
 		else {
-	  		console.log('Crash saved for user: '+username);
+			console.log('Crash saved for applicationId: '+applicationId);
 			//mensaje push
+			
+			 var channel = "";
+			 var alert = exception;
+			 var sound = "cheering.caf";
+			 var badge = "Increment";
+			 var title = "You have an error!"
+			 
+			 //var result = sendPushNotification(channel, alert, sound, badge, title);
+			 
+			//console.log('Notification sent: '+result);
 		}
 	});
+	
+	res.send('Crash detected! '+ applicationId);
 });
 
 app.get('/parse', function(req, res){
-	
+		
 	parse.findMany('Todo', {order:5}, function (err, response) {
 	  res.send(response);
 	});
@@ -82,17 +104,99 @@ app.get('/parse', function(req, res){
 });
 
 // List all crashes
-app.get('/listCrashLog', function(req, res){
-	var username = req.param('username', null);
+app.get('/listCrashLog/:applicationId', function(req, res){
+	var applicationId = req.param('applicationId', null);
 	var datenow = new Date();
-	CrashData.find().limit(100).execFind(function (arr,data) {
+	CrashData.find({applicationId:applicationId}).limit(100).execFind(function (arr,data) {
 		res.send(data);
 	});
 });
 
+// List all apps
+app.get('/listApplications/:username', function(req, res){
+	var username = req.param('username', null);
+	var datenow = new Date();
+	Application.find().limit(100).execFind(function (arr,data) {
+		res.send(data);
+	});
+});
+
+app.get('/createApplication', function(req, res){
+
+	var name = req.param('name', null);
+	
+	var applicationId = uuid.v1();
+
+	var newApp = new Application({ 
+		applicationId: applicationId, 
+		name: name
+		});
+		
+	newApp.save(function (err) {
+		if (err) {
+			console.log('Error...');
+		}
+		else {
+			res.send('New app created '+name+'. ApplicationId: '+ applicationId);
+		}
+	});
+	
+});
+
+function buildPushNotification(channel, alert, sound, badge, title) {
+	var json = '{"channels": ["'+channel+'"],"data": {"alert": "'+alert+'","badge": "'+badge+'","sound": "'+sound+'","title":  "'+title+'"}}'
+	return json
+}
+
+function sendPushNotification(channel, alert, sound, badge, title) {
+
+	var ret = false;
+	
+	 var json = buildPushNotification(channel, alert, sound, badge, title);
+	 
+	parse.sendPushNotification(json,function (err, response) {
+	  if(response.result == true){
+		ret = true;
+	  }
+	});
+	
+	return ret;
+}
+
 app.get('/', routes.index);
 app.get('/users', user.list);
+
 
 http.createServer(app).listen(app.get('port'), function(){
   console.log("Express server listening on port " + app.get('port'));
 });
+
+/*
+app.get('/sendpush',function(req,res){
+
+	 var channel = "";
+	 var alert = "Hey!! you!!!";
+	 var sound = "cheering.caf";
+	 var badge = "Increment";
+	 var title = "Mets Score!"
+	 
+	 var json = buildPushNotification(channel, alert, sound, badge, title);
+	 
+	parse.sendPushNotification(json,function (err, response) {
+	  res.send(response);
+	});
+
+});
+*/
+
+
+
+
+
+
+
+
+
+
+
+
